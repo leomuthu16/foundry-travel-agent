@@ -1,0 +1,79 @@
+name: Deploy Travel Expense Agent
+
+# Runs when the agent definition, tests or scripts change on main, or manually.
+on:
+  push:
+    branches: [main]
+    paths: ["agent/**", "tests/**", "scripts/**", ".github/workflows/deploy-agent.yml"]
+  workflow_dispatch:
+
+# Needed for passwordless sign-in to Azure (OpenID Connect). No secrets or keys are stored.
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  dev:
+    name: Deploy and test in DEV
+    runs-on: ubuntu-latest
+    environment: dev            # GitHub environment holding the DEV variables
+    env:
+      FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_PROJECT_ENDPOINT }}
+      VECTOR_STORE_ID: ${{ vars.VECTOR_STORE_ID }}
+    outputs:
+      agent_version: ${{ steps.deploy.outputs.agent_version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Sign in to Azure (OIDC, no secrets)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy new agent version
+        id: deploy
+        run: python scripts/deploy_agent.py
+
+      - name: Run test questions (quality gate)
+        run: python scripts/run_tests.py --version ${{ steps.deploy.outputs.agent_version }}
+
+  prod:
+    name: Deploy to PROD (after approval)
+    needs: dev
+    runs-on: ubuntu-latest
+    environment: prod           # add "Required reviewers" to this environment for a manual approval
+    env:
+      FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_PROJECT_ENDPOINT }}
+      VECTOR_STORE_ID: ${{ vars.VECTOR_STORE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Sign in to Azure (OIDC, no secrets)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy agent version
+        id: deploy
+        run: python scripts/deploy_agent.py
+
+      - name: Smoke test in PROD
+        run: python scripts/run_tests.py --version ${{ steps.deploy.outputs.agent_version }}

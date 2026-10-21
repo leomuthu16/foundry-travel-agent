@@ -1,0 +1,38 @@
+[
+  {
+    "id": "hotel-seattle",
+    "question": "What's the hotel limit in Seattle?",
+    "must_contain_any": ["300"],
+    "expected_tools": ["file_search"]
+  },
+  {
+    "id": "mileage-dinners",
+    "question": "I drove 230 miles and had 3 dinners at $45 each. How much can I claim?",
+    "must_contain_any": ["274.10", "274.1"],
+    "expected_tools": ["code_interpreter"]
+  },
+  {
+    "id": "alcohol",
+    "question": "Can I expense a beer with dinner on my own?",
+    "must_contain_any": ["client"],
+    "expected_tools": ["file_search"]
+  },
+  {
+    "id": "receipt-threshold",
+    "question": "Do I need a receipt for an $18 breakfast?",
+    "must_contain_any": ["25"],
+    "expected_tools": ["file_search"]
+  },
+  {
+    "id": "gym",
+    "question": "Is my gym membership reimbursable while traveling?",
+    "must_contain_any": ["non-reimbursable", "not reimbursable", "not be reimbursable", "isn't reimbursable", "is not covered"],
+    "expected_tools": ["file_search"]
+  },
+  {
+    "id": "not-covered",
+    "question": "What's the policy on pet-sitting while I travel?",
+    "must_contain_any": ["finance"],
+    "expected_tools": ["file_search"]
+  }
+]
