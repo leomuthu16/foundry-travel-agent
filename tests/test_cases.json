@@ -69,7 +69,7 @@
     "requires_claims_api": true,
     "question": "Submit my Austin trip expenses: hotel 1 night $245, lunch $31, hotel minibar $22. My name is Daniel Kim.",
     "must_contain_any": [
-      "confirm"
+      "confirm", "would you like me to submit", "shall i submit", "do you want me to submit"
     ],
     "expected_tools": [],
     "must_not_use_tools": [

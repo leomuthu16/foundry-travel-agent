@@ -8,11 +8,11 @@
   },
   "code_interpreter": true,
   "claims_api": {
-    "enabled": false,
+    "enabled": true,
     "tool_name": "expense_claims",
     "description": "Submit expense claims and check claim status in the Contoso expense system.",
     "spec_file": "agent/tools/expense_claims.openapi.json",
-    "base_url": "REPLACE_WITH_https://<your-function-app>.azurewebsites.net/api",
+    "base_url": "https://contoso-claims-mk01-acdhftcugrdbhkf5.northcentralus-01.azurewebsites.net/api",
     "extra_instructions_file": "agent/instructions_claims.md"
   }
 }
