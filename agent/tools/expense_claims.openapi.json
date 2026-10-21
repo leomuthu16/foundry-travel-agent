@@ -1,0 +1,114 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Contoso Expense Claims API",
+    "version": "1.0.0",
+    "description": "Submit travel expense claims and check their status."
+  },
+  "servers": [
+    { "url": "https://REPLACE-WITH-YOUR-FUNCTION-APP.azurewebsites.net/api" }
+  ],
+  "paths": {
+    "/claims": {
+      "post": {
+        "operationId": "submitClaim",
+        "summary": "Submit an expense claim for reimbursement.",
+        "description": "Submits a travel expense claim. Only call this AFTER you have shown the employee a summary of the items and reimbursable amounts and the employee has explicitly confirmed they want to submit. Include only reimbursable amounts (apply the policy limits first). Never call this without explicit confirmation.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ClaimRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Claim submitted.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClaimResult" } } }
+          },
+          "400": {
+            "description": "Claim rejected by validation. The errors explain what to fix.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClaimErrors" } } }
+          }
+        }
+      }
+    },
+    "/claims/{claim_id}": {
+      "get": {
+        "operationId": "getClaimStatus",
+        "summary": "Get the status of a submitted claim.",
+        "description": "Returns the current status of an expense claim by its claim ID (for example CLM-20261020-AB12C).",
+        "parameters": [
+          {
+            "name": "claim_id",
+            "in": "path",
+            "required": true,
+            "description": "The claim ID returned when the claim was submitted.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Claim found.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClaimResult" } } }
+          },
+          "404": { "description": "Claim not found." }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ClaimRequest": {
+        "type": "object",
+        "required": ["employee_name", "trip_city", "items", "employee_confirmed"],
+        "properties": {
+          "employee_name": { "type": "string", "description": "Full name of the employee." },
+          "trip_city": { "type": "string", "description": "City of the business trip." },
+          "employee_confirmed": {
+            "type": "boolean",
+            "description": "Must be true. Set to true only after the employee explicitly confirmed the summary."
+          },
+          "items": {
+            "type": "array",
+            "description": "Expense items with reimbursable amounts after applying policy limits.",
+            "items": {
+              "type": "object",
+              "required": ["category", "amount", "description"],
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "enum": ["airfare", "lodging", "meal", "client meal", "mileage", "ground transport", "other"]
+                },
+                "amount": { "type": "number", "description": "Reimbursable amount in USD." },
+                "description": { "type": "string", "description": "Short description, e.g. 'Hotel - 1 night'." },
+                "date": { "type": "string", "description": "Expense date, YYYY-MM-DD." }
+              }
+            }
+          }
+        }
+      },
+      "ClaimResult": {
+        "type": "object",
+        "properties": {
+          "claim_id": { "type": "string" },
+          "status": { "type": "string", "description": "Submitted, or Pending manager approval for claims over $1,000." },
+          "employee_name": { "type": "string" },
+          "trip_city": { "type": "string" },
+          "total_amount": { "type": "number" },
+          "item_count": { "type": "integer" },
+          "submitted_at": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      },
+      "ClaimErrors": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

@@ -20,6 +20,10 @@ def load_config() -> dict:
         config["model"] = os.environ["MODEL_DEPLOYMENT"]
     if os.getenv("VECTOR_STORE_ID"):
         config["file_search"]["vector_store_id"] = os.environ["VECTOR_STORE_ID"]
+    claims = config.setdefault("claims_api", {"enabled": False})
+    if os.getenv("CLAIMS_API_URL"):  # setting the URL per environment also switches the tool on
+        claims["base_url"] = os.environ["CLAIMS_API_URL"]
+        claims["enabled"] = True
     return config
 
 

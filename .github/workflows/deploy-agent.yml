@@ -20,6 +20,7 @@ jobs:
     env:
       FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_PROJECT_ENDPOINT }}
       VECTOR_STORE_ID: ${{ vars.VECTOR_STORE_ID }}
+      CLAIMS_API_URL: ${{ vars.CLAIMS_API_URL }}     # optional: set it to switch on the claims tool
     outputs:
       agent_version: ${{ steps.deploy.outputs.agent_version }}
     steps:
@@ -54,6 +55,7 @@ jobs:
     env:
       FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_PROJECT_ENDPOINT }}
       VECTOR_STORE_ID: ${{ vars.VECTOR_STORE_ID }}
+      CLAIMS_API_URL: ${{ vars.CLAIMS_API_URL }}     # optional: set it to switch on the claims tool
     steps:
       - uses: actions/checkout@v4
 

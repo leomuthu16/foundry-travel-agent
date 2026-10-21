@@ -22,6 +22,8 @@ def main() -> int:
 
     config = load_config()
     cases = json.loads((ROOT / "tests" / "test_cases.json").read_text(encoding="utf-8"))
+    claims_enabled = (config.get("claims_api") or {}).get("enabled")
+    cases = [c for c in cases if claims_enabled or not c.get("requires_claims_api")]
     project = get_project()
 
     rows, failures = [], 0
@@ -32,8 +34,16 @@ def main() -> int:
             used = tools_used(response)
             text_ok = any(k.lower() in answer.lower() for k in case["must_contain_any"])
             tools_ok = all(t in used for t in case.get("expected_tools", []))
-            passed = text_ok and tools_ok
-            reason = "" if passed else ("missing expected text" if not text_ok else f"expected tools {case['expected_tools']}")
+            forbidden = [t for t in used if any(t.startswith(f) for f in case.get("must_not_use_tools", []))]
+            passed = text_ok and tools_ok and not forbidden
+            if passed:
+                reason = ""
+            elif forbidden:
+                reason = f"used forbidden tool {forbidden}"
+            elif not text_ok:
+                reason = "missing expected text"
+            else:
+                reason = f"expected tools {case['expected_tools']}"
             tokens = token_usage(response)
         except Exception as error:  # report the error and keep testing the other cases
             passed, used, tokens, answer, reason = False, [], None, "", f"error: {error}"

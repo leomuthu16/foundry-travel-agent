@@ -7,6 +7,7 @@ The agent definition (model, instructions, tools) lives in Git, so every change 
 reviewed and traceable. Each run creates a new agent version; old versions stay
 available for rollback.
 """
+import json
 import os
 import subprocess
 
@@ -14,6 +15,9 @@ from azure.ai.projects.models import (
     AutoCodeInterpreterToolParam,
     CodeInterpreterTool,
     FileSearchTool,
+    OpenApiAnonymousAuthDetails,
+    OpenApiFunctionDefinition,
+    OpenApiTool,
     PromptAgentDefinition,
 )
 
@@ -46,6 +50,26 @@ def main() -> None:
     if config.get("code_interpreter"):
         tools.append(CodeInterpreterTool(container=AutoCodeInterpreterToolParam()))
 
+    # Optional action tool: the Expense Claims API (Azure Function) described by an OpenAPI spec
+    claims = config.get("claims_api") or {}
+    if claims.get("enabled"):
+        base_url = claims.get("base_url", "")
+        if not base_url.startswith("https://"):
+            raise SystemExit("claims_api is enabled but base_url is not set. Set it in agent.config.json "
+                             "or with the CLAIMS_API_URL environment variable.")
+        spec = json.loads((ROOT / claims["spec_file"]).read_text(encoding="utf-8"))
+        spec["servers"] = [{"url": base_url.rstrip("/")}]  # point the spec at this environment's API
+        tools.append(OpenApiTool(openapi=OpenApiFunctionDefinition(
+            name=claims.get("tool_name", "expense_claims"),
+            description=claims.get("description"),
+            spec=spec,
+            # Practice setup. In production use OpenApiManagedAuthDetails (managed identity) instead.
+            auth=OpenApiAnonymousAuthDetails(),
+        )))
+        extra = claims.get("extra_instructions_file")
+        if extra:
+            instructions += "\n" + (ROOT / extra).read_text(encoding="utf-8").rstrip()
+
     project = get_project()
     agent = project.agents.create_version(
         agent_name=config["agent_name"],
@@ -58,7 +82,8 @@ def main() -> None:
         metadata={"git_commit": git_commit(), "deployed_by": os.getenv("GITHUB_ACTOR", "local")},
     )
 
-    print(f"Deployed agent '{agent.name}' version {agent.version} (commit {git_commit()})")
+    tool_names = [t.as_dict().get("type") for t in tools]
+    print(f"Deployed agent '{agent.name}' version {agent.version} (commit {git_commit()}) tools={tool_names}")
 
     # Pass the version to the next pipeline step
     output_file = os.getenv("GITHUB_OUTPUT")
