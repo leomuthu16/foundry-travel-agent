@@ -1,0 +1,57 @@
+name: Refresh Blog Index (scheduled)
+
+# Like the platform's timer-triggered refresh functions:
+# incremental every 6 hours (new and changed posts), full every night (also removes deleted posts).
+# GitHub schedules use UTC: 09:30 UTC is 02:30 in Seattle (PDT).
+on:
+  schedule:
+    - cron: "0 */6 * * *"     # incremental
+    - cron: "30 9 * * *"      # full
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Refresh type"
+        type: choice
+        options: [incremental, full]
+        default: incremental
+
+permissions:
+  id-token: write
+  contents: read
+
+defaults:
+  run:
+    working-directory: blog-rag
+
+jobs:
+  refresh:
+    name: Refresh PROD index
+    runs-on: ubuntu-latest
+    environment: content-refresh        # no reviewers, so scheduled runs never wait
+    concurrency: blog-rag-prod-index    # waits if a deployment is writing the same index
+    env:
+      INDEX_NAME: blog-posts
+      AGENT_NAME: BlogReaderAssistant
+      FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_PROJECT_ENDPOINT }}
+      AZURE_OPENAI_ENDPOINT: ${{ vars.AZURE_OPENAI_ENDPOINT }}
+      SEARCH_ENDPOINT: ${{ vars.SEARCH_ENDPOINT }}
+      SEARCH_ADMIN_KEY: ${{ secrets.SEARCH_ADMIN_KEY }}
+      FOUNDRY_RESOURCE_KEY: ${{ secrets.FOUNDRY_RESOURCE_KEY }}
+      MODE: ${{ github.event.schedule == '30 9 * * *' && 'full' || inputs.mode || 'incremental' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Sign in to Azure (OIDC, no secrets)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Refresh the index (${{ env.MODE }})
+        run: python scripts/ingest.py --${MODE}
+      - name: Check the assistant still answers correctly
+        run: python scripts/run_tests.py

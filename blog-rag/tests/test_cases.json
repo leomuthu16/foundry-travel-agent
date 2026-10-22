@@ -1,0 +1,136 @@
+[
+  {
+    "id": "cross-post-pipelines",
+    "question": "What changed in pipelines over the last three releases?",
+    "phases": [
+      "baseline"
+    ],
+    "expect": {
+      "baseline": [
+        "version",
+        "event"
+      ]
+    }
+  },
+  {
+    "id": "latest-retry-limit",
+    "question": "How many times can a failed pipeline activity be retried automatically?",
+    "phases": [
+      "baseline",
+      "fresh"
+    ],
+    "expect": {
+      "baseline": [
+        "5",
+        "five"
+      ],
+      "fresh": [
+        "5",
+        "five"
+      ]
+    }
+  },
+  {
+    "id": "rls-status",
+    "question": "Is row-level security generally available?",
+    "phases": [
+      "baseline",
+      "fresh"
+    ],
+    "expect": {
+      "baseline": [
+        "generally available",
+        "2026.7"
+      ],
+      "fresh": [
+        "generally available",
+        "2026.7"
+      ]
+    }
+  },
+  {
+    "id": "ftp-removal-date",
+    "question": "When will the legacy FTP connector be removed?",
+    "phases": [
+      "baseline",
+      "fresh"
+    ],
+    "expect": {
+      "baseline": [
+        "2026.11"
+      ],
+      "fresh": [
+        "2027.1"
+      ]
+    }
+  },
+  {
+    "id": "run-history-export",
+    "question": "Can I export pipeline run history to a CSV file?",
+    "phases": [
+      "baseline",
+      "fresh"
+    ],
+    "expect": {
+      "baseline": [
+        "not cover",
+        "doesn't cover",
+        "does not cover",
+        "no information",
+        "not mention",
+        "doesn't mention",
+        "does not mention",
+        "couldn't find",
+        "could not find",
+        "no blog post",
+        "not covered",
+        "can't confirm",
+        "cannot confirm"
+      ],
+      "fresh": [
+        "csv",
+        "2026.10"
+      ]
+    }
+  },
+  {
+    "id": "not-covered",
+    "question": "Does DataHub have a connector for Oracle databases?",
+    "phases": [
+      "baseline",
+      "fresh"
+    ],
+    "expect": {
+      "baseline": [
+        "not cover",
+        "doesn't cover",
+        "does not cover",
+        "no information",
+        "not mention",
+        "doesn't mention",
+        "does not mention",
+        "couldn't find",
+        "could not find",
+        "no blog post",
+        "not covered",
+        "can't confirm",
+        "cannot confirm"
+      ],
+      "fresh": [
+        "not cover",
+        "doesn't cover",
+        "does not cover",
+        "no information",
+        "not mention",
+        "doesn't mention",
+        "does not mention",
+        "couldn't find",
+        "could not find",
+        "no blog post",
+        "not covered",
+        "can't confirm",
+        "cannot confirm"
+      ]
+    }
+  }
+]

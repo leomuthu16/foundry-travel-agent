@@ -1,0 +1,94 @@
+name: Deploy Blog Reader Assistant
+
+# Runs when the scripts, agent instructions, config or tests change on main, or manually.
+# New or changed posts (blog-rag/content) do not deploy: the scheduled refresh picks them up,
+# just as published WordPress posts reach the index through the refresh functions, not a release.
+on:
+  push:
+    branches: [main]
+    paths: ["blog-rag/**", "!blog-rag/content/**", ".github/workflows/blog-rag-deploy.yml"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # passwordless sign-in to Azure (OIDC) with the managed identity
+  contents: read
+
+defaults:
+  run:
+    working-directory: blog-rag
+
+env:
+  FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_PROJECT_ENDPOINT }}
+  AZURE_OPENAI_ENDPOINT: ${{ vars.AZURE_OPENAI_ENDPOINT }}
+  SEARCH_ENDPOINT: ${{ vars.SEARCH_ENDPOINT }}
+  SEARCH_CONNECTION_NAME: ${{ vars.SEARCH_CONNECTION_NAME }}   # optional
+  SEARCH_ADMIN_KEY: ${{ secrets.SEARCH_ADMIN_KEY }}             # Free tier: keys (see the guide)
+  FOUNDRY_RESOURCE_KEY: ${{ secrets.FOUNDRY_RESOURCE_KEY }}     # used only by the index vectorizer
+
+jobs:
+  dev:
+    name: DEV - index, deploy, test, evaluate
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      INDEX_NAME: blog-posts-dev
+      AGENT_NAME: BlogReaderAssistant-dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Sign in to Azure (OIDC, no secrets)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Index the posts (full refresh)
+        run: python scripts/ingest.py --full
+      - name: Deploy new agent version
+        id: deploy
+        run: python scripts/create_agent.py
+      - name: Test questions (quality gate 1)
+        run: python scripts/run_tests.py --version ${{ steps.deploy.outputs.agent_version }}
+      - name: Evaluate accuracy and citations (quality gate 2)
+        run: python scripts/evaluate.py --version ${{ steps.deploy.outputs.agent_version }}
+      - name: Keep the evaluation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-dev
+          path: blog-rag/eval_results/
+          if-no-files-found: ignore
+
+  prod:
+    name: PROD - index and deploy (after approval)
+    needs: dev
+    runs-on: ubuntu-latest
+    environment: prod
+    concurrency: blog-rag-prod-index     # never run at the same time as the scheduled refresh
+    env:
+      INDEX_NAME: blog-posts
+      AGENT_NAME: BlogReaderAssistant
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Sign in to Azure (OIDC, no secrets)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Index the posts (full refresh)
+        run: python scripts/ingest.py --full
+      - name: Deploy agent version
+        id: deploy
+        run: python scripts/create_agent.py
+      - name: Smoke test in PROD
+        run: python scripts/run_tests.py --version ${{ steps.deploy.outputs.agent_version }}

@@ -1,0 +1,72 @@
+[
+  {
+    "id": "pipelines-last-three",
+    "question": "What changed in pipelines over the last three releases?",
+    "phases": ["baseline"],
+    "reference": "2026.9: pipelines can start on events such as a new file arriving, and concurrent runs per workspace rose from 20 to 50. 2026.7: every saved change creates a version; versions can be compared and rolled back (last 20). 2026.5: run alerts by email or Teams, and automatic retries per activity rose from 3 to 5.",
+    "sources": ["release-2026-09", "release-2026-07", "release-2026-05"]
+  },
+  {
+    "id": "pipelines-last-three-fresh",
+    "question": "What changed in pipelines over the last three releases?",
+    "phases": ["fresh"],
+    "reference": "2026.10: export of pipeline run history to CSV and a template gallery. 2026.9: event-based triggers, and concurrent runs per workspace rose from 20 to 50. 2026.7: pipeline versioning with compare and rollback to the last 20 versions.",
+    "sources": ["release-2026-10", "release-2026-09", "release-2026-07"]
+  },
+  {
+    "id": "retry-limit",
+    "question": "How many automatic retries can a failed pipeline activity have?",
+    "phases": ["baseline", "fresh"],
+    "reference": "Up to 5 retries per activity since 2026.5 (it was 3 when retries were introduced in 2026.3).",
+    "sources": ["release-2026-05"]
+  },
+  {
+    "id": "concurrent-runs",
+    "question": "What is the maximum number of concurrent pipeline runs per workspace?",
+    "phases": ["baseline", "fresh"],
+    "reference": "50, since 2026.9 (raised from 20; it was raised from 10 to 20 in 2026.1).",
+    "sources": ["release-2026-09"]
+  },
+  {
+    "id": "free-tier-storage",
+    "question": "How much storage does the free tier include?",
+    "phases": ["baseline", "fresh"],
+    "reference": "10 GB since 2026.5 (it was 5 GB before).",
+    "sources": ["release-2026-05"]
+  },
+  {
+    "id": "ftp-removal",
+    "question": "When will the legacy FTP connector be removed, and what should I use instead?",
+    "phases": ["baseline"],
+    "reference": "It is planned for removal in 2026.11 (deprecated in 2026.7). Move connections to the SFTP connector, preferably with SSH key authentication.",
+    "sources": ["release-2026-07", "ftp-to-sftp-migration"]
+  },
+  {
+    "id": "ftp-removal-fresh",
+    "question": "When will the legacy FTP connector be removed, and what should I use instead?",
+    "phases": ["fresh"],
+    "reference": "Removal moved from 2026.11 to 2027.1 (announced in 2026.10). Move connections to the SFTP connector, preferably with SSH key authentication.",
+    "sources": ["release-2026-10", "ftp-to-sftp-migration"]
+  },
+  {
+    "id": "rls-setup",
+    "question": "How do I set up row-level security, and is it generally available?",
+    "phases": ["baseline", "fresh"],
+    "reference": "Yes, generally available since 2026.7 (preview in 2026.3). Create a security role in the dataset settings with a filter expression such as Region = \"EMEA\", add users or groups, and test with View as role.",
+    "sources": ["release-2026-07", "row-level-security-guide"]
+  },
+  {
+    "id": "retry-advice",
+    "question": "Should I retry a pipeline activity that failed a data-quality check?",
+    "phases": ["baseline", "fresh"],
+    "reference": "No. Retries only help with temporary failures; schema mismatches and failed data-quality checks fail again on every attempt, so route them to an alert instead.",
+    "sources": ["resilient-pipelines-retries"]
+  },
+  {
+    "id": "not-covered",
+    "question": "Does DataHub have a connector for Oracle databases?",
+    "phases": ["baseline", "fresh"],
+    "reference": "The blog does not cover an Oracle connector. The assistant should say so and not guess.",
+    "sources": []
+  }
+]

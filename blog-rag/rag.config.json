@@ -1,0 +1,15 @@
+{
+  "index_name": "blog-posts",
+  "embedding_deployment": "text-embedding-3-small",
+  "embedding_model": "text-embedding-3-small",
+  "embedding_dimensions": 1536,
+  "agent_name": "BlogReaderAssistant",
+  "model": "gpt-5.4-mini",
+  "instructions_file": "agent_instructions.md",
+  "search_query_type": "vector_simple_hybrid",
+  "top_k": 5,
+  "judge_model": "gpt-5.4-mini",
+  "eval_min_correctness": 4.0,
+  "eval_min_citation_recall": 0.75,
+  "tool_choice": "required"
+}
