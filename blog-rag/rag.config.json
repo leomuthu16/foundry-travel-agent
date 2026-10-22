@@ -7,7 +7,7 @@
   "model": "gpt-5.4-mini",
   "instructions_file": "agent_instructions.md",
   "search_query_type": "vector_simple_hybrid",
-  "top_k": 5,
+  "top_k": 10,
   "judge_model": "gpt-5.4-mini",
   "eval_min_correctness": 4.0,
   "eval_min_citation_recall": 0.75,
